@@ -10,3 +10,5 @@ echo 1408 >  buffer_size_kb
 
 echo 1 > tracing_on 
 echo 0 > tracing_on 
+
+cat trace | head -30
