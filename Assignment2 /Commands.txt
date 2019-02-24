@@ -1,0 +1,12 @@
+Setup function_graph
+echo function_graph > current_tracer 
+cat current_tracer
+    function_graph
+
+
+cat buffer_size_kb
+    1408
+echo 1408 >  buffer_size_kb 
+
+echo 1 > tracing_on 
+echo 0 > tracing_on 

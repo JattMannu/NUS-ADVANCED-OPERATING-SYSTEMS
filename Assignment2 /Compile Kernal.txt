@@ -1,0 +1,29 @@
+$ cd linux-4.20.12
+$ cp -v /boot/config-$(uname -r) .config
+or
+make defconfig
+
+
+$ sudo apt-get install build-essential libncurses-dev bison flex libssl-dev libelf-dev
+
+$ make menuconfig
+
+$ make
+
+$ make -j $(nproc) 
+or
+$ make -j 4
+
+
+Install the Linux kernel modules
+$ sudo make modules_install
+$ sudo make install
+
+The following commands are optional as make install does everything for your but included here for historical reasons only:
+$ sudo update-initramfs -c -k 4.20.12
+$ sudo update-grub
+
+reboot
+$ uname -mrs
+or 
+uname -a
