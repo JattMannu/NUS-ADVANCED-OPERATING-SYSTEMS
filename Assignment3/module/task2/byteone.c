@@ -38,11 +38,13 @@ int onebyte_release(struct inode *inode, struct file *filep)
 ssize_t onebyte_read(struct file *filep, char *buf, size_t count, loff_t *f_pos)
 {
     /*please complete the function on your own*/
+    printk(KERN_INFO "onebyte_read %s\n", buf);
     return 0;
 }
 ssize_t onebyte_write(struct file *filep, const char *buf, size_t count, loff_t *f_pos)
 {
     //todo
+    printk(KERN_INFO "onebyte_write %s\n", buf);
     return 0;
 }
 /*please complete the function on your own*/
@@ -90,3 +92,5 @@ MODULE_LICENSE("GPL");
 
 module_init(onebyte_init);
 module_exit(onebyte_exit);
+
+MODULE_SUPPORTED_DEVICE("testdevice");
