@@ -6,7 +6,7 @@
 #include <linux/types.h>
 #include <linux/fs.h>
 #include <linux/proc_fs.h>
-#include <asm/uaccess.h>
+#include <linux/uaccess.h>
 
 #define MAJOR_NUMBER 61
 /* forward declaration */
@@ -39,13 +39,20 @@ ssize_t onebyte_read(struct file *filep, char *buf, size_t count, loff_t *f_pos)
 {
     /*please complete the function on your own*/
     printk(KERN_INFO "onebyte_read %s\n", buf);
-    return 1;
+    if(*f_pos != 0){
+        return 0;
+
+    }else{
+        copy_to_user(buf,onebyte_data,1);
+        *f_pos += 1; 
+        return 1;
+    }
 }
 ssize_t onebyte_write(struct file *filep, const char *buf, size_t count, loff_t *f_pos)
 {
     //todo
     printk(KERN_INFO "onebyte_write %s\n", buf);
-    return 0;
+    return 1;
 }
 /*please complete the function on your own*/
 static int onebyte_init(void)
@@ -94,3 +101,4 @@ module_init(onebyte_init);
 module_exit(onebyte_exit);
 
 MODULE_SUPPORTED_DEVICE("testdevice");
+
