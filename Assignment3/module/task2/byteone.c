@@ -52,7 +52,16 @@ ssize_t onebyte_write(struct file *filep, const char *buf, size_t count, loff_t 
 {
     //todo
     printk(KERN_INFO "onebyte_write %s\n", buf);
-    return 1;
+    if(*f_pos != 0){
+        printk(KERN_INFO "onebyte_write: NOT ENOUGH SPACE!");
+        return ENOSPC; //return valid error code.
+    }else{
+        printk(KERN_INFO "onebyte_write: Written to memory.");
+        copy_from_user(onebyte_data, buf , 1);
+        *f_pos += 1; 
+        return 1;
+    }
+    
 }
 /*please complete the function on your own*/
 static int onebyte_init(void)
