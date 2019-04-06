@@ -20,12 +20,16 @@ class Process:
         self.id = id
         self.arrive_time = arrive_time
         self.burst_time = burst_time
+        self.burst_time_bak = burst_time
+        self.compare = None
+        self.first_call = None
     #for printing purpose
     def __repr__(self):
         return ('[id %d : arrival_time %d,  burst_time %d]'%(self.id, self.arrive_time, self.burst_time))
 
     def __lt__(self, other):
-        return self.burst_time < other.burst_time
+        #return self.burst_time < other.burst_time
+        return self.compare(self, other)
 
 def FCFS_scheduling(process_list):
     #store the (switching time, proccess_id) pair
@@ -100,21 +104,26 @@ def RR_scheduling(process_list, time_quantum ):
     #print(finishedQ.qsize())
     return (["to be completed, scheduling process_list on round robin policy with time_quantum"], 0.0)
 
-def SRTF_scheduling(process_list):
+def _scheduling(process_list, compare):
     time = 0
+    _process_list = copy.deepcopy(process_list)
     finishedQ = queue.Queue()
     runnableQ = queue.PriorityQueue()
     
     current_process = None
-    for tick in range(-1, 200):
+    for tick in range(-1, 130):
         print(tick)
-        for task in process_list:
+        for task in _process_list:
             if task.arrive_time == tick:   
                 #print("\t task added to runnableQ= " + task.__repr__())
+                task.compare = compare 
                 runnableQ.put(task)
 
         if (not runnableQ.empty()):
             current_process = runnableQ.get_nowait();
+            if current_process.first_call != None:
+                current_process.first_call = tick
+
 
         if current_process != None:
             current_process.burst_time -= 1
@@ -128,11 +137,21 @@ def SRTF_scheduling(process_list):
         else:    
             print("\t CPU IDLE\tRunableQ size: "+ str(runnableQ.qsize()))
 
+    return _process_list
+
+def SRTF_compare(param1,param2):
+    return param1.burst_time < param2.burst_time
+
+def SRTF_scheduling(process_list):
+    _process_list = _scheduling(process_list,SRTF_compare)
     return (["to be completed, scheduling process_list on SRTF, using process.burst_time to calculate the remaining time of the current process "], 0.0)
 
+def SJF_compare(param1,param2):
+    return param1.burst_time_bak < param2.burst_time_bak
+
 def SJF_scheduling(process_list, alpha):
-    finishedQ = []
-    runnableQ = copy.deepcopy(process_list)
+    _process_list = _scheduling(process_list,SJF_compare)
+    
     return (["to be completed, scheduling SJF without using information from process.burst_time"],0.0)
 
 
