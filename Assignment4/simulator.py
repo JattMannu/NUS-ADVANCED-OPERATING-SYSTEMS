@@ -24,6 +24,7 @@ class Process:
         self.compare = None
         self.first_call = None
         self.finish_time = None
+        self.predicted_burst = None
 
     def amount_waited(self):
         return self.finish_time - self.arrive_time - self.burst_time_bak
@@ -176,36 +177,60 @@ def SRTF_scheduling(process_list):
     return (["to be completed, scheduling process_list on SRTF, using process.burst_time to calculate the remaining time of the current process "], avg_wait)
 
 def SJF_compare(param1,param2):
-    return param1.burst_time_bak < param2.burst_time_bak
+    return param1.predicted_burst < param2.predicted_burst
+
+def predict_bust(a, t_n ,tp_n):
+    return a*t_n + (1 - a)* tp_n
 
 def SJF_scheduling(process_list, alpha):
     _process_list = copy.deepcopy(process_list)
     finishedQ = queue.Queue()
     runnableQ = queue.PriorityQueue()
     current_process = None
-    
-    for tick in range(-1, 30):
+    out_put = []
+    prev_id = -1
+    tp_ns = [5 ,5 ,5 ,5]
+
+    for tick in range(-1, 150):
         print(tick)
         for task in _process_list:
-            if task.arrive_time == tick:   
+            if task.arrive_time == tick:
+                  #=   predict_bust(alpha,task.burst_time,tp_ns[task.id])
+                task.predicted_burst = tp_ns[task.id]
+                tp_ns[task.id] = predict_bust(alpha,task.burst_time,tp_ns[task.id])
+                #print("\ttaskid = "+str(task.id)+"\tburst_time_bak = " +str(task.burst_time_bak)+ "\t predicted_burst = " +str(task.predicted_burst))
                 #print("\t task added to runnableQ= " + task.__repr__())
                 task.compare = SJF_compare 
                 runnableQ.put(task)
             
         if (not runnableQ.empty() and current_process == None):
             current_process = runnableQ.get_nowait()
+            if prev_id != current_process.id:
+                out_put.append((tick, current_process.id))
             if current_process.first_call != None:
                 current_process.first_call = tick
-        
+
         if current_process != None and current_process.burst_time > 0:
+            prev_id = current_process.id
             current_process.burst_time -= 1
             print("\t CPU = " + current_process.__repr__() + "\tRunableQ is "+ str(runnableQ.qsize()))
-        else:
+        elif current_process != None:
+            current_process.finish_time = tick
             finishedQ.put(current_process)
             current_process = None
             print("\t FINISHED ")
 
-    return (["to be completed, scheduling SJF without using information from process.burst_time"],0.0)
+
+    total_wait = 0
+    for task in _process_list:
+        #wait =  task.first_call - task.arrive_time 
+        #print(task.amount_waited())
+        total_wait += task.amount_waited() + 1
+        #print(task.finish_time)
+    avg_wait = total_wait / len(process_list)
+    print(out_put)
+    print(str(avg_wait))
+    return (out_put,avg_wait)
 
 
 def read_input():
@@ -234,14 +259,14 @@ def main(argv):
     FCFS_schedule, FCFS_avg_waiting_time =  FCFS_scheduling(process_list)
     write_output('FCFS.txt', FCFS_schedule, FCFS_avg_waiting_time )
     print ("simulating RR ----")
-    RR_schedule, RR_avg_waiting_time =  RR_scheduling(process_list,time_quantum = 2)
-    write_output('RR.txt', RR_schedule, RR_avg_waiting_time )
+    #RR_schedule, RR_avg_waiting_time =  RR_scheduling(process_list,time_quantum = 2)
+    #write_output('RR.txt', RR_schedule, RR_avg_waiting_time )
     print ("simulating SRTF ----")
     # SRTF_schedule, SRTF_avg_waiting_time =  SRTF_scheduling(process_list)
     # write_output('SRTF.txt', SRTF_schedule, SRTF_avg_waiting_time )
     print ("simulating SJF ----")
-    #SJF_schedule, SJF_avg_waiting_time =  SJF_scheduling(process_list, alpha = 0.5)
-    #write_output('SJF.txt', SJF_schedule, SJF_avg_waiting_time )
+    SJF_schedule, SJF_avg_waiting_time =  SJF_scheduling(process_list, alpha = 0.5)
+    write_output('SJF.txt', SJF_schedule, SJF_avg_waiting_time )
 
 if __name__ == '__main__':
     main(sys.argv[1:])
