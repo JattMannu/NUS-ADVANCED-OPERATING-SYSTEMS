@@ -23,6 +23,11 @@ class Process:
         self.burst_time_bak = burst_time
         self.compare = None
         self.first_call = None
+        self.finish_time = None
+
+    def amount_waited(self):
+        return self.finish_time - self.arrive_time - self.burst_time_bak
+
     #for printing purpose
     def __repr__(self):
         return ('[id %d : arrival_time %d,  burst_time %d]'%(self.id, self.arrive_time, self.burst_time))
@@ -49,14 +54,13 @@ def FCFS_scheduling(process_list):
 #Output_1 : Schedule list contains pairs of (time_stamp, proccess_id) indicating the time switching to that proccess_id
 #Output_2 : Average Waiting Time
 def RR_scheduling(process_list, time_quantum ):
-    time = 0
     finishedQ = queue.Queue()
     runnableQ = queue.Queue()
-    #Assume 1 epoch.
     current_process = None
+    out_put = []
 
-    current_time_quantum = 0;
-    for tick in range(0, 0):
+    current_time_quantum = 0
+    for tick in range(-10, 130):
         
         print(tick)
         
@@ -68,59 +72,79 @@ def RR_scheduling(process_list, time_quantum ):
             if current_process != None and current_process.burst_time > 0:
                 runnableQ.put(current_process)
             elif current_process != None:
+                current_process.finish_time = tick
                 print("\t FINISHED " + current_process.__repr__())
                 finishedQ.put(current_process)
-            #else:
-                #print("\t CPU IDLE")
 
             if(not runnableQ.empty()):
                 current_process = runnableQ.get_nowait()
+                out_put.append((tick, current_process.id))
                 current_time_quantum = time_quantum #Give the new process some time slice.
+                if current_process.first_call == None:
+                    current_process.first_call = tick
             else:
                 current_process = None
-
-
         else:
             #current_time_quantum is not 0 and the current_process is finished
             if current_process != None and current_process.burst_time == 0:
+                current_process.finish_time = tick
                 finishedQ.put(current_process)
                 current_time_quantum = 0
+                current_process = None
                 print("\t FINISHED " + current_process.__repr__())
-                if(not runnableQ.empty()):
-                    current_process = runnableQ.get_nowait()
-                    current_time_quantum = time_quantum
-                else:
-                    current_process = None
-        
+                # if(not runnableQ.empty()):
+                #     current_process = runnableQ.get_nowait()
+                #     out_put.append((tick, current_process.id))
+                #     current_time_quantum = time_quantum
+                #     if current_process.first_call == None:
+                #         current_process.first_call = tick
+                # else:
+                #     current_process = None
         
         if current_process != None:
             current_process.burst_time -= 1
             current_time_quantum  -= 1  
             print("\t CPU = " + current_process.__repr__() + "\tRunableQ is "+ str(runnableQ.qsize())+ "\tcurrent_time_quantum: "+str(current_time_quantum))
         else:    
-            print("\t CPU IDLE\tRunableQ size: "+ str(runnableQ.qsize()) + "\tcurrent_time_quantum: "+str(current_time_quantum))
+            print("\t CPU IDLE \tRunableQ size: "+ str(runnableQ.qsize()) + "\tcurrent_time_quantum: "+str(current_time_quantum))
         
     #print(runnableQ.qsize())
     #print(finishedQ.qsize())
-    return (["to be completed, scheduling process_list on round robin policy with time_quantum"], 0.0)
+    total_wait = 0
+    for task in process_list:
+        #wait =  task.first_call - task.arrive_time 
+        print(str(task.id) +" : "+ str(task.amount_waited()))
+        total_wait += task.amount_waited()
+        print(task.finish_time)
+    avg_wait = total_wait / len(process_list)
+    print(out_put)
+    print(str(avg_wait))
 
-def _scheduling(process_list, compare):
-    time = 0
+    #return (["to be completed, scheduling process_list on round robin policy with time_quantum"], avg_wait)
+    return (out_put, avg_wait)
+
+def SRTF_compare(param1,param2):
+    return param1.burst_time < param2.burst_time
+
+def SRTF_scheduling(process_list):
     _process_list = copy.deepcopy(process_list)
     finishedQ = queue.Queue()
     runnableQ = queue.PriorityQueue()
-    
+    out_put = []
+    prev_id = -1
     current_process = None
     for tick in range(-1, 130):
         print(tick)
         for task in _process_list:
             if task.arrive_time == tick:   
-                #print("\t task added to runnableQ= " + task.__repr__())
-                task.compare = compare 
+                task.compare = SRTF_compare 
                 runnableQ.put(task)
 
+
         if (not runnableQ.empty()):
-            current_process = runnableQ.get_nowait();
+            current_process = runnableQ.get_nowait()
+            if prev_id != current_process.id:
+                out_put.append((tick, current_process.id))
             if current_process.first_call != None:
                 current_process.first_call = tick
 
@@ -129,29 +153,58 @@ def _scheduling(process_list, compare):
             current_process.burst_time -= 1
             print("\t CPU = " + current_process.__repr__() + "\tRunableQ is "+ str(runnableQ.qsize()))
             if current_process.burst_time  == 0:
+                current_process.finish_time = tick
                 finishedQ.put(current_process)
                 print("\t FINISHED ")
             else:
                 runnableQ.put(current_process)
+            prev_id = current_process.id
             current_process = None
         else:    
             print("\t CPU IDLE\tRunableQ size: "+ str(runnableQ.qsize()))
 
-    return _process_list
+    total_wait = 0
+    for task in _process_list:
+        #wait =  task.first_call - task.arrive_time 
+        #print(task.amount_waited())
+        total_wait += task.amount_waited() + 1
+        #print(task.finish_time)
+    avg_wait = total_wait / len(process_list)
+    print(out_put)
+    print(str(avg_wait))
 
-def SRTF_compare(param1,param2):
-    return param1.burst_time < param2.burst_time
-
-def SRTF_scheduling(process_list):
-    _process_list = _scheduling(process_list,SRTF_compare)
-    return (["to be completed, scheduling process_list on SRTF, using process.burst_time to calculate the remaining time of the current process "], 0.0)
+    return (["to be completed, scheduling process_list on SRTF, using process.burst_time to calculate the remaining time of the current process "], avg_wait)
 
 def SJF_compare(param1,param2):
     return param1.burst_time_bak < param2.burst_time_bak
 
 def SJF_scheduling(process_list, alpha):
-    _process_list = _scheduling(process_list,SJF_compare)
+    _process_list = copy.deepcopy(process_list)
+    finishedQ = queue.Queue()
+    runnableQ = queue.PriorityQueue()
+    current_process = None
     
+    for tick in range(-1, 30):
+        print(tick)
+        for task in _process_list:
+            if task.arrive_time == tick:   
+                #print("\t task added to runnableQ= " + task.__repr__())
+                task.compare = SJF_compare 
+                runnableQ.put(task)
+            
+        if (not runnableQ.empty() and current_process == None):
+            current_process = runnableQ.get_nowait()
+            if current_process.first_call != None:
+                current_process.first_call = tick
+        
+        if current_process != None and current_process.burst_time > 0:
+            current_process.burst_time -= 1
+            print("\t CPU = " + current_process.__repr__() + "\tRunableQ is "+ str(runnableQ.qsize()))
+        else:
+            finishedQ.put(current_process)
+            current_process = None
+            print("\t FINISHED ")
+
     return (["to be completed, scheduling SJF without using information from process.burst_time"],0.0)
 
 
@@ -184,11 +237,11 @@ def main(argv):
     RR_schedule, RR_avg_waiting_time =  RR_scheduling(process_list,time_quantum = 2)
     write_output('RR.txt', RR_schedule, RR_avg_waiting_time )
     print ("simulating SRTF ----")
-    SRTF_schedule, SRTF_avg_waiting_time =  SRTF_scheduling(process_list)
-    write_output('SRTF.txt', SRTF_schedule, SRTF_avg_waiting_time )
+    # SRTF_schedule, SRTF_avg_waiting_time =  SRTF_scheduling(process_list)
+    # write_output('SRTF.txt', SRTF_schedule, SRTF_avg_waiting_time )
     print ("simulating SJF ----")
-    SJF_schedule, SJF_avg_waiting_time =  SJF_scheduling(process_list, alpha = 0.5)
-    write_output('SJF.txt', SJF_schedule, SJF_avg_waiting_time )
+    #SJF_schedule, SJF_avg_waiting_time =  SJF_scheduling(process_list, alpha = 0.5)
+    #write_output('SJF.txt', SJF_schedule, SJF_avg_waiting_time )
 
 if __name__ == '__main__':
     main(sys.argv[1:])
