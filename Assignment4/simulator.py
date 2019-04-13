@@ -173,8 +173,7 @@ def SRTF_scheduling(process_list):
     avg_wait = total_wait / len(process_list)
     print(out_put)
     print(str(avg_wait))
-
-    return (["to be completed, scheduling process_list on SRTF, using process.burst_time to calculate the remaining time of the current process "], avg_wait)
+    return (out_put, avg_wait)
 
 def SJF_compare(param1,param2):
     return param1.predicted_burst < param2.predicted_burst
@@ -203,13 +202,6 @@ def SJF_scheduling(process_list, alpha):
                 task.compare = SJF_compare 
                 runnableQ.put(task)
             
-        if (not runnableQ.empty() and current_process == None):
-            current_process = runnableQ.get_nowait()
-            if prev_id != current_process.id:
-                out_put.append((tick, current_process.id))
-            if current_process.first_call != None:
-                current_process.first_call = tick
-
         if current_process != None and current_process.burst_time > 0:
             prev_id = current_process.id
             current_process.burst_time -= 1
@@ -220,12 +212,16 @@ def SJF_scheduling(process_list, alpha):
             current_process = None
             print("\t FINISHED ")
 
+        if (not runnableQ.empty() and current_process == None):
+            current_process = runnableQ.get_nowait()
+            out_put.append((tick, current_process.id))
+            current_process.burst_time -= 1
 
     total_wait = 0
     for task in _process_list:
         #wait =  task.first_call - task.arrive_time 
-        #print(task.amount_waited())
-        total_wait += task.amount_waited() + 1
+        print(task.amount_waited())
+        total_wait += task.amount_waited()
         #print(task.finish_time)
     avg_wait = total_wait / len(process_list)
     print(out_put)
@@ -262,8 +258,8 @@ def main(argv):
     #RR_schedule, RR_avg_waiting_time =  RR_scheduling(process_list,time_quantum = 2)
     #write_output('RR.txt', RR_schedule, RR_avg_waiting_time )
     print ("simulating SRTF ----")
-    # SRTF_schedule, SRTF_avg_waiting_time =  SRTF_scheduling(process_list)
-    # write_output('SRTF.txt', SRTF_schedule, SRTF_avg_waiting_time )
+    #SRTF_schedule, SRTF_avg_waiting_time =  SRTF_scheduling(process_list)
+    #write_output('SRTF.txt', SRTF_schedule, SRTF_avg_waiting_time )
     print ("simulating SJF ----")
     SJF_schedule, SJF_avg_waiting_time =  SJF_scheduling(process_list, alpha = 0.5)
     write_output('SJF.txt', SJF_schedule, SJF_avg_waiting_time )
