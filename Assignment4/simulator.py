@@ -12,7 +12,7 @@ Output files:
 import sys
 import copy
 import queue 
-input_file = 'input.txt'
+input_file = 'input (mix).txt'
 
 class Process:
     last_scheduled_time = 0
@@ -61,7 +61,7 @@ def RR_scheduling(process_list, time_quantum ):
     out_put = []
 
     current_time_quantum = 0
-    for tick in range(-10, 130):
+    for tick in range(-10, 400):
         
         print(tick)
         
@@ -74,6 +74,7 @@ def RR_scheduling(process_list, time_quantum ):
                 runnableQ.put(current_process)
             elif current_process != None:
                 current_process.finish_time = tick
+                current_process = None
                 print("\t FINISHED " + current_process.__repr__())
                 finishedQ.put(current_process)
 
@@ -93,14 +94,14 @@ def RR_scheduling(process_list, time_quantum ):
                 current_time_quantum = 0
                 current_process = None
                 print("\t FINISHED " + current_process.__repr__())
-                # if(not runnableQ.empty()):
-                #     current_process = runnableQ.get_nowait()
-                #     out_put.append((tick, current_process.id))
-                #     current_time_quantum = time_quantum
-                #     if current_process.first_call == None:
-                #         current_process.first_call = tick
-                # else:
-                #     current_process = None
+                if(not runnableQ.empty()):
+                    current_process = runnableQ.get_nowait()
+                    out_put.append((tick, current_process.id))
+                    current_time_quantum = time_quantum
+                    if current_process.first_call == None:
+                        current_process.first_call = tick
+                else:
+                    current_process = None
         
         if current_process != None:
             current_process.burst_time -= 1
@@ -134,7 +135,7 @@ def SRTF_scheduling(process_list):
     out_put = []
     prev_id = -1
     current_process = None
-    for tick in range(-1, 130):
+    for tick in range(-1, 250):
         print(tick)
         for task in _process_list:
             if task.arrive_time == tick:   
@@ -187,10 +188,9 @@ def SJF_scheduling(process_list, alpha):
     runnableQ = queue.PriorityQueue()
     current_process = None
     out_put = []
-    prev_id = -1
     tp_ns = [5 ,5 ,5 ,5]
 
-    for tick in range(-1, 150):
+    for tick in range(-1, 250):
         print(tick)
         for task in _process_list:
             if task.arrive_time == tick:
@@ -209,13 +209,14 @@ def SJF_scheduling(process_list, alpha):
         elif current_process != None:
             current_process.finish_time = tick
             finishedQ.put(current_process)
+            print("\t FINISHED  CPU = " + current_process.__repr__() + "\tRunableQ is "+ str(runnableQ.qsize()))
             current_process = None
-            print("\t FINISHED ")
 
         if (not runnableQ.empty() and current_process == None):
             current_process = runnableQ.get_nowait()
             out_put.append((tick, current_process.id))
             current_process.burst_time -= 1
+            print("\t CPU = " + current_process.__repr__() + "\tRunableQ is "+ str(runnableQ.qsize()))
 
     total_wait = 0
     for task in _process_list:
@@ -255,13 +256,13 @@ def main(argv):
     FCFS_schedule, FCFS_avg_waiting_time =  FCFS_scheduling(process_list)
     write_output('FCFS.txt', FCFS_schedule, FCFS_avg_waiting_time )
     print ("simulating RR ----")
-    #RR_schedule, RR_avg_waiting_time =  RR_scheduling(process_list,time_quantum = 2)
+    #RR_schedule, RR_avg_waiting_time =  RR_scheduling(process_list,time_quantum = 10)
     #write_output('RR.txt', RR_schedule, RR_avg_waiting_time )
     print ("simulating SRTF ----")
     #SRTF_schedule, SRTF_avg_waiting_time =  SRTF_scheduling(process_list)
     #write_output('SRTF.txt', SRTF_schedule, SRTF_avg_waiting_time )
     print ("simulating SJF ----")
-    SJF_schedule, SJF_avg_waiting_time =  SJF_scheduling(process_list, alpha = 0.5)
+    SJF_schedule, SJF_avg_waiting_time =  SJF_scheduling(process_list, alpha = 0.9)
     write_output('SJF.txt', SJF_schedule, SJF_avg_waiting_time )
 
 if __name__ == '__main__':
