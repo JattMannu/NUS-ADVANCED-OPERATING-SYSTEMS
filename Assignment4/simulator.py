@@ -12,7 +12,7 @@ Output files:
 import sys
 import copy
 import queue 
-input_file = 'input (mix).txt'
+input_file = 'input.txt'
 
 class Process:
     last_scheduled_time = 0
@@ -262,7 +262,7 @@ def main(argv):
     #SRTF_schedule, SRTF_avg_waiting_time =  SRTF_scheduling(process_list)
     #write_output('SRTF.txt', SRTF_schedule, SRTF_avg_waiting_time )
     print ("simulating SJF ----")
-    SJF_schedule, SJF_avg_waiting_time =  SJF_scheduling(process_list, alpha = 0.9)
+    SJF_schedule, SJF_avg_waiting_time =  SJF_scheduling(process_list, alpha = 0.52)
     write_output('SJF.txt', SJF_schedule, SJF_avg_waiting_time )
 
 if __name__ == '__main__':
